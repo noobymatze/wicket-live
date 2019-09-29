@@ -19,15 +19,6 @@ import org.junit.Test
 import javax.websocket.*
 import javax.websocket.server.ServerEndpoint
 
-class Test {
-
-    @Test
-    fun x() {
-        val mapper = ObjectMapper().registerKotlinModule()
-        println(mapper.writeValueAsString(Msg.Inc))
-    }
-
-}
 
 object ServerTest {
 

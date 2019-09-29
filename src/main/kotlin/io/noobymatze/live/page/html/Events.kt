@@ -1,13 +1,17 @@
 package io.noobymatze.live.page.html
 
+import io.noobymatze.live.page.html.Attribute.Event.Handler
+import io.noobymatze.live.page.html.BrowserEvent.Payload
+
 
 object Events {
 
-    fun <Msg> onClick(msg: Msg): Attribute<Msg> =
-        Attribute.EventListener.OnClick(msg)
+    fun <Msg> on(event: String, f: (Payload?) -> Msg): Attribute<Msg> =
+        Attribute.Event(event, Handler.Fn(f))
 
-    // fun <Msg> onInput(msg: (String) -> Msg): Attribute<Msg> =
-    //    Attribute.EventListener("input") { msg("") }
+    fun <Msg> onClick(msg: Msg): Attribute<Msg> =
+        on("click") { msg }
+
 
 }
 

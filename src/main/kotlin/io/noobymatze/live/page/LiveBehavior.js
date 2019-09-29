@@ -1,7 +1,5 @@
 window.addEventListener('load', function () {
     'use strict';
-    console.log('Starting application');
-    console.log(window.morhpdom)
 
     var app = document.getElementById('app');
 
@@ -11,9 +9,12 @@ window.addEventListener('load', function () {
             if (attr.type === 'Attr') {
                 element.setAttribute(attr.key, attr.value);
             }
-            else if (attr.type === 'OnClick') {
-                element.addEventListener('click', function (event) {
-                    Wicket.WebSocket.send(JSON.stringify(attr.msg));
+            else if (attr.type === 'Event') {
+                element.addEventListener(attr.event, function (event) {
+                    Wicket.WebSocket.send(JSON.stringify({
+                        handlerId: attr.handler,
+                        payload: null
+                    }));
                 });
             }
             else {

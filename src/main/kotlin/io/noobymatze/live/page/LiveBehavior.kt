@@ -1,9 +1,10 @@
 package io.noobymatze.live.page
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import io.noobymatze.live.page.internal.BrowserMessage
+import com.fasterxml.jackson.core.JsonProcessingException
+import io.noobymatze.live.page.html.Attribute.Event.Handler
+import io.noobymatze.live.page.html.BrowserEvent
+import io.noobymatze.live.page.html.Html
+import io.noobymatze.live.page.internal.JSON
 import mu.KotlinLogging
 import org.apache.wicket.Application
 import org.apache.wicket.Component
@@ -18,16 +19,17 @@ import org.apache.wicket.request.resource.PackageResourceReference
 
 
 internal class LiveBehavior<Model, Msg>(
-    val program: Program<Model, Msg>,
-    val msgClass: Class<Msg>
+    val program: Program<Model, Msg>
 ) : WebSocketBehavior() {
 
     private var model: Model? = null // TODO: AtomicReference?
     private var liveSession: LiveSession? = null
+    private var handlers = mutableMapOf<Int, Handler.Fn<Msg>>()
 
     override fun onConnect(message: ConnectedMessage) {
         super.onConnect(message)
-        println("Client connected ${message.key}")
+
+        logger.info { "Client connected ${message.key}" }
 
         this.liveSession = LiveSession(
             key = message.key,
@@ -36,35 +38,49 @@ internal class LiveBehavior<Model, Msg>(
         )
 
         if (model == null) {
-            val model = program.init()
-            val result = program.view(model)
-            val mapper = ObjectMapper().registerKotlinModule()
-            send(liveSession!!, mapper.writeValueAsString(result))
-            this.model = model
+            this.model = program.init()
+        }
+
+        model?.let {
+            val html = program.view(it)
+            liveSession?.let { session ->
+                send(session, html)
+            }
         }
     }
 
-    private fun send(session: LiveSession, message: String) {
-        println(message)
+    override fun onMessage(websocketHandler: WebSocketRequestHandler, message: TextMessage) {
+        super.onMessage(websocketHandler, message)
+
+        try {
+            logger.info { "Received message ${message.text}" }
+
+            val event = JSON.unsafeParse(message.text, BrowserEvent::class)
+            val handler = handlers[event.handlerId]
+
+            if (handler == null) {
+                logger.error { "Unkown message, ignoring ${message.text}" }
+                return
+            }
+
+            model?.let {
+                val newModel = program.update(handler(event.payload), it)
+                val html = program.view(newModel)
+                this.model = newModel
+                websocketHandler.push(JSON.unsafeStringify(html))
+            }
+        } catch (ex: JsonProcessingException) {
+            logger.error(ex) { "Error while reading the message: ${message.text}"}
+        }
+    }
+
+    private fun send(session: LiveSession, message: Html<Msg>) = try {
         SimpleWebSocketConnectionRegistry()
             .getConnection(Application.get(session.applicationKey), session.sessionId, session.key)
             ?.takeIf { it.isOpen }
-            ?.sendMessage(message)
-    }
-
-    override fun onMessage(handler: WebSocketRequestHandler, message: TextMessage) {
-        super.onMessage(handler, message)
-        logger.info { "Received message ${message.text}" }
-
-        val mapper = ObjectMapper().registerKotlinModule()
-        val msg = mapper.readValue(message.text, msgClass)
-
-        model?.let {
-            val newModel = program.update(msg, it)
-            val html = program.view(newModel)
-            this.model = newModel
-            handler.push(mapper.writeValueAsString(html))
-        }
+            ?.sendMessage(JSON.unsafeStringify(message))
+    } catch (ex: JsonProcessingException) {
+        logger.error(ex) { "Error while trying to send current html" }
     }
 
     override fun renderHead(component: Component, response: IHeaderResponse) {
@@ -82,4 +98,5 @@ internal class LiveBehavior<Model, Msg>(
     companion object {
         private val logger = KotlinLogging.logger { }
     }
+
 }

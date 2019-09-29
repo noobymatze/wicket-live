@@ -9,14 +9,13 @@ import org.apache.wicket.util.resource.StringResourceStream
 
 
 abstract class LivePage<Model, Msg>(
-    params: PageParameters,
-    val msgClass: Class<Msg>
+    params: PageParameters
 ): WebPage(params), Program<Model, Msg>, IMarkupResourceStreamProvider {
 
     override fun onInitialize() {
         super.onInitialize()
 
-        add(LiveBehavior<Model, Msg>(this, msgClass))
+        add(LiveBehavior<Model, Msg>(this))
     }
 
     override fun getMarkupResourceStream(
