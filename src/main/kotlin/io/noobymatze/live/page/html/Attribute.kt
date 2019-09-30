@@ -51,56 +51,53 @@ sealed class Attribute<out Msg>(val type: Type): Serializable {
     internal data class Event<out Msg>(
         val event: String,
         val handler: Handler<Msg>
-    ): Attribute<Msg>(Type.Event) {
+    ): Attribute<Msg>(Type.Event)
+
+    /**
+     *
+     */
+    @JsonSerialize(using = Handler.Serializer::class)
+    sealed class Handler<out Msg> {
 
         /**
          *
          */
-        @JsonSerialize(using = Handler.Serializer::class)
-        sealed class Handler<out Msg> {
+        data class Fn<out Msg>(
+            private val f: (Payload?) -> Msg
+        ): Handler<Msg>(), (Payload?) -> Msg {
 
-            /**
-             *
-             */
-            data class Fn<out Msg>(
-                private val f: (Payload?) -> Msg
-            ): Handler<Msg>(), (Payload?) -> Msg {
+            override fun invoke(event: Payload?): Msg =
+                f(event)
 
-                override fun invoke(event: Payload?): Msg =
-                    f(event)
+        }
 
-            }
+        /**
+         *
+         */
+        data class Custom<out Msg>(val identifier: Int): Handler<Msg>()
 
-            /**
-             *
-             */
-            data class Custom<out Msg>(val identifier: Int): Handler<Msg>()
+        /**
+         *
+         */
+        class Serializer: StdSerializer<Handler<Any?>>(Handler::class.java) {
 
-            /**
-             *
-             */
-            class Serializer: StdSerializer<Handler<Any?>>(Handler::class.java) {
+            override fun serialize(
+                handler: Handler<Any?>?,
+                gen: JsonGenerator,
+                provider: SerializerProvider
+            ) {
 
-                override fun serialize(
-                    handler: Handler<Any?>?,
-                    gen: JsonGenerator,
-                    provider: SerializerProvider
-                ) {
+                when (handler) {
+                    is Fn ->
+                        gen.writeNull()
 
-                    when (handler) {
-                        is Fn ->
-                            gen.writeNull()
-
-                        is Custom ->
-                            gen.writeNumber(handler.identifier)
-                    }
-
+                    is Custom ->
+                        gen.writeNumber(handler.identifier)
                 }
 
             }
+
         }
-
     }
-
 }
 

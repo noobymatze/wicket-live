@@ -6,16 +6,17 @@ import org.apache.wicket.markup.html.WebPage
 import org.apache.wicket.request.mapper.parameter.PageParameters
 import org.apache.wicket.util.resource.IResourceStream
 import org.apache.wicket.util.resource.StringResourceStream
+import java.io.Serializable
 
 
-abstract class LivePage<Model, Msg>(
+abstract class LivePage<Model: Serializable, Msg: Serializable>(
     params: PageParameters
 ): WebPage(params), Program<Model, Msg>, IMarkupResourceStreamProvider {
 
     override fun onInitialize() {
         super.onInitialize()
 
-        add(LiveBehavior<Model, Msg>(this))
+        add(LiveBehavior(this))
     }
 
     override fun getMarkupResourceStream(
