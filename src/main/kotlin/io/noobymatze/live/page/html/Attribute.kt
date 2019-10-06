@@ -56,6 +56,23 @@ sealed class Attribute<out Msg>(val type: Type): Serializable {
     /**
      *
      */
+    fun <NewMsg> map(f: (Msg) -> NewMsg): Attribute<NewMsg> = when (this) {
+        is Attr ->
+            this as Attribute<NewMsg>
+
+        is Event -> Event(event, when (val h = handler) {
+            is Handler.Fn ->
+                Handler.Fn { f(h(it))}
+
+            is Handler.Custom ->
+                h as Handler.Custom<NewMsg>
+        })
+
+    }
+
+    /**
+     *
+     */
     @JsonSerialize(using = Handler.Serializer::class)
     sealed class Handler<out Msg>: Serializable {
 
