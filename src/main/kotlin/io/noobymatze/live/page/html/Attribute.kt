@@ -50,14 +50,14 @@ sealed class Attribute<out Msg>(val type: Type): Serializable {
      */
     internal data class Event<out Msg>(
         val event: String,
-        val handler: Handler<Msg>
+        var handler: Handler<@UnsafeVariance Msg>
     ): Attribute<Msg>(Type.Event)
 
     /**
      *
      */
     @JsonSerialize(using = Handler.Serializer::class)
-    sealed class Handler<out Msg> {
+    sealed class Handler<out Msg>: Serializable {
 
         /**
          *

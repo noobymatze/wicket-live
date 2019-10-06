@@ -6,13 +6,17 @@ window.addEventListener('load', function () {
     function applyAttributes(element, attributes) {
         for (var i = 0; i < attributes.length; i++) {
             var attr = attributes[i];
+            console.log('Is Attr: ', attr.type === 'Attr')
+            console.log('Is Event: ', attr.type === 'Event')
             if (attr.type === 'Attr') {
                 element.setAttribute(attr.key, attr.value);
             }
             else if (attr.type === 'Event') {
-                element.addEventListener(attr.event, function (event) {
+                var type = attr.event;
+                var handler = attr.handler; // Avoid capture of the last attr for handler
+                element.addEventListener(type, function (event) {
                     Wicket.WebSocket.send(JSON.stringify({
-                        handlerId: attr.handler,
+                        handlerId: handler,
                         payload: null
                     }));
                 });

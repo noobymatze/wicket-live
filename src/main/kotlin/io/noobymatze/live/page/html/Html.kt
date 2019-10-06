@@ -3,6 +3,7 @@ package io.noobymatze.live.page.html
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import java.io.Serializable
+import java.util.*
 
 
 /**
@@ -38,6 +39,28 @@ sealed class Html<out Msg>: Serializable {
     internal data class Text<out Msg>(
         val content: String
     ): Html<Msg>()
+
+
+    fun replaceHandlers(): Map<Int, Attribute.Handler.Fn<Msg>> {
+        val html = Stack<Html<Msg>>().apply { add(this@Html) }
+        val map = mutableMapOf<Int, Attribute.Handler.Fn<Msg>>()
+        var identifier = 0
+        while (html.isNotEmpty()) {
+            val next = html.pop()
+            if (next is Node) {
+                next.attributes.forEach {
+                    if (it is Attribute.Event && it.handler is Attribute.Handler.Fn) {
+                        map[identifier] = it.handler as Attribute.Handler.Fn<Msg>
+                        it.handler = Attribute.Handler.Custom(identifier)
+                        identifier++
+                    }
+                }
+                next.children.forEach { html.push(it) }
+            }
+        }
+
+        return map
+    }
 
 
     companion object {

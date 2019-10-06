@@ -73,14 +73,14 @@ internal class LiveBehavior<Model: Serializable, Msg: Serializable>(
         is State.NeverConnected -> {
             val model = program.init()
             val html = program.view(model)
-            val handlers = mapOf<Int, Attribute.Handler.Fn<Msg>>()
+            val handlers = html.replaceHandlers()
             send(session, html)
             State.Connected(model, session, handlers)
         }
 
         is State.Disconnected -> {
             val html = program.view(state.model)
-            val handlers = mapOf<Int, Attribute.Handler.Fn<Msg>>()
+            val handlers = html.replaceHandlers()
             send(session, html)
             State.Connected(state.model, session, handlers)
         }
@@ -114,7 +114,7 @@ internal class LiveBehavior<Model: Serializable, Msg: Serializable>(
             else -> {
                 val newModel = program.update(handler(message.payload), state.model)
                 val html = program.view(newModel)
-                val handlers = mapOf<Int, Attribute.Handler.Fn<Msg>>()
+                val handlers = html.replaceHandlers()
                 send(state.session, html)
                 state.copy(model = newModel, handlers = handlers)
             }
