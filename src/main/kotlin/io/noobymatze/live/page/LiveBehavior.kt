@@ -12,6 +12,7 @@ import org.apache.wicket.markup.head.IHeaderResponse
 import org.apache.wicket.markup.head.JavaScriptReferenceHeaderItem
 import org.apache.wicket.protocol.ws.api.WebSocketBehavior
 import org.apache.wicket.protocol.ws.api.WebSocketRequestHandler
+import org.apache.wicket.protocol.ws.api.message.ClosedMessage
 import org.apache.wicket.protocol.ws.api.message.ConnectedMessage
 import org.apache.wicket.protocol.ws.api.message.TextMessage
 import org.apache.wicket.protocol.ws.api.registry.IKey
@@ -22,7 +23,7 @@ import java.io.Serializable
 
 internal class LiveBehavior<Model: Serializable, Msg: Serializable>(
     private val program: Program<Model, Msg>,
-    private val model: Model?
+    model: Model?
 ) : WebSocketBehavior() {
 
 
@@ -59,6 +60,13 @@ internal class LiveBehavior<Model: Serializable, Msg: Serializable>(
         } catch (ex: JsonProcessingException) {
             logger.error(ex) { "Error while reading the message: ${message.text}"}
         }
+    }
+
+
+    override fun onClose(message: ClosedMessage) {
+        super.onClose(message)
+
+        this.state = update(state, message)
     }
 
 
@@ -122,6 +130,29 @@ internal class LiveBehavior<Model: Serializable, Msg: Serializable>(
                 state.copy(model = newModel, handlers = handlers)
             }
         }
+    }
+
+    /**
+     * Update the given [state], when a client disconnects.
+     *
+     * @param state the current state
+     * @param session a
+     * @return a new state based on the current state
+     */
+    private fun update(
+        state: State<Model, Msg>,
+        _message: ClosedMessage
+    ): State<Model, Msg> = when (state) {
+        is State.NeverConnected ->
+            state
+
+        is State.Disconnected ->
+            state
+
+        is State.Connected ->
+            State.Disconnected(
+                state.model
+            )
     }
 
     override fun renderHead(component: Component, response: IHeaderResponse) {
