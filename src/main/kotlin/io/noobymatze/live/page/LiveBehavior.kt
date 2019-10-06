@@ -163,6 +163,10 @@ internal class LiveBehavior<Model: Serializable, Msg: Serializable>(
         ))
 
         response.render(JavaScriptReferenceHeaderItem.forReference(
+            PackageResourceReference(LiveBehavior::class.java, "internal/LiveDom.js")
+        ))
+
+        response.render(JavaScriptReferenceHeaderItem.forReference(
             PackageResourceReference(LiveBehavior::class.java, "LiveBehavior.js")
         ))
     }
