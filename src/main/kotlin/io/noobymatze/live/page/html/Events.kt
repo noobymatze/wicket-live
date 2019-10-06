@@ -9,7 +9,7 @@ object Events {
      *
      */
     fun <Msg> on(event: String, f: (Payload?) -> Msg): Attribute<Msg> =
-        Attribute.Event(event, Attribute.Handler.Fn(f))
+        Attribute(Attribute.Type.Event, event, Attribute.Value.Listener(f))
 
     /**
      *

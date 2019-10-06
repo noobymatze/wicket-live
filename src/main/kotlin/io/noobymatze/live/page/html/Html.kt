@@ -1,23 +1,15 @@
 package io.noobymatze.live.page.html
 
-import com.fasterxml.jackson.annotation.JsonSubTypes
-import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.databind.SerializerProvider
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import com.fasterxml.jackson.databind.ser.std.StdSerializer
+import io.noobymatze.live.page.html.Attribute.Type.Event
 import java.io.Serializable
 import java.util.*
 
 
-/**
- *
- */
-@JsonTypeInfo(
-    use = JsonTypeInfo.Id.NAME,
-    include = JsonTypeInfo.As.PROPERTY,
-    property = "type"
-)
-@JsonSubTypes(
-    JsonSubTypes.Type(value = Html.Node::class, name = "Node"),
-    JsonSubTypes.Type(value = Html.Text::class, name = "Text")
-)
+@JsonSerialize(using = Html.Serializer::class)
 sealed class Html<out Msg>: Serializable {
 
     /**
@@ -28,7 +20,7 @@ sealed class Html<out Msg>: Serializable {
      */
     internal data class Node<out Msg>(
         val name: String,
-        val attributes: List<Attribute<Msg>>,
+        val attributes: MutableMap<Attribute.Type, List<Attribute<@UnsafeVariance Msg>>>,
         val children: List<Html<Msg>>
     ) : Html<Msg>()
 
@@ -40,33 +32,57 @@ sealed class Html<out Msg>: Serializable {
         val content: String
     ) : Html<Msg>()
 
-    /**
-     *
-     */
-    fun <NewMsg> map(f: (Msg) -> NewMsg): Html<NewMsg> = when (this) {
-        is Node -> Node(
-            name,
-            attributes.map { it.map(f) },
-            children.map { it.map(f) }
-        )
 
-        is Text ->
-            this as Html<NewMsg>
+    internal class Serializer: StdSerializer<Html<Any?>>(Html::class.java) {
+
+        override fun serialize(
+            html: Html<Any?>,
+            gen: JsonGenerator,
+            provider: SerializerProvider
+        ) {
+            when (html) {
+                is Node -> gen.apply {
+                    writeStartArray()
+                    writeString(html.name)
+                    writeStartObject()
+                    html.attributes.forEach { type, list ->
+                        writeFieldName(type.name.toUpperCase())
+                        writeStartObject()
+                        val serializer = provider.findValueSerializer(Attribute::class.java)
+                        list.forEach {
+                            serializer.serialize(it, gen, provider)
+                        }
+                        writeEndObject()
+                    }
+                    writeEndObject()
+                    html.children.forEach {
+                        serialize(it, gen, provider)
+                    }
+                    writeEndArray()
+                }
+
+                is Text -> gen.apply {
+                    writeString(html.content)
+                }
+            }
+        }
+
     }
 
 
-    fun replaceHandlers(): Map<Int, Attribute.Handler.Fn<Msg>> {
+    fun replaceHandlers(): Map<Int, Attribute.Value.Listener<Msg>> {
         val html = Stack<Html<Msg>>().apply { add(this@Html) }
-        val map = mutableMapOf<Int, Attribute.Handler.Fn<Msg>>()
+        val map = mutableMapOf<Int, Attribute.Value.Listener<Msg>>()
         var identifier = 0
         while (html.isNotEmpty()) {
             val next = html.pop()
             if (next is Node) {
-                next.attributes.forEach {
-                    if (it is Attribute.Event && it.handler is Attribute.Handler.Fn) {
-                        map[identifier] = it.handler as Attribute.Handler.Fn<Msg>
-                        it.handler = Attribute.Handler.Custom(identifier)
-                        identifier++
+                next.attributes[Event]?.let {
+                    next.attributes[Event] = it.map { attribute ->
+                        val handler = attribute.value as Attribute.Value.Listener<Msg>
+                        val ref = Attribute.Value.ListenerRef<Msg>(identifier++)
+                        map[ref.id] = handler
+                        attribute.copy(value = Attribute.Value.ListenerRef(ref.id))
                     }
                 }
                 next.children.forEach { html.push(it) }
@@ -79,11 +95,28 @@ sealed class Html<out Msg>: Serializable {
 
     companion object {
 
+        private fun <Msg> organizeAttributes(
+            attributes: List<Attribute<Msg>>
+        ): MutableMap<Attribute.Type, List<Attribute<Msg>>> {
+            val map = mutableMapOf<Attribute.Type, MutableList<Attribute<Msg>>>()
+            attributes.forEach {
+                if (!map.containsKey(it.type)) {
+                    map[it.type] = mutableListOf()
+                }
+
+                map[it.type]!!.add(it)
+            }
+
+            // This is casting up, so no problems here
+            @Suppress("UNCHECKED_CAST")
+            return map as MutableMap<Attribute.Type, List<Attribute<Msg>>>
+        }
+
         fun <Msg> node(name: String, attributes: List<Attribute<Msg>>, vararg children: Html<Msg>): Html<Msg> =
-            Node(name, attributes, children.toList())
+            Node(name, organizeAttributes(attributes), children.toList())
 
         fun <Msg> node(name: String, vararg children: Html<Msg>): Html<Msg> =
-            Node(name, listOf(), children.toList())
+            Node(name, mutableMapOf(), children.toList())
 
         fun <Msg> text(content: String): Html<Msg> =
             Text(content)

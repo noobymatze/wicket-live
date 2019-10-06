@@ -1,50 +1,74 @@
 window.addEventListener('load', function () {
     'use strict';
 
+
+    // CONSTANTS
+
+    var EVENT = "EVENT";
+    var ATTRIBUTE = "ATTRIBUTE";
+
     var app = document.getElementById('app');
 
+
+
+    // RENDER
+
+
+    function makeCallback(key, handlerId) {
+        return function (event) {
+            Wicket.WebSocket.send(JSON.stringify({
+                handlerId: handlerId,
+                payload: null
+            }));
+        }
+    }
+
+
+    function applyEvents(element, events) {
+        for (var key in events) {
+            var handler = events[key];
+            element.addEventListener(key, makeCallback(key, handler));
+        }
+    }
+
+
+    function applyAttr(element, attributes) {
+        for (var key in attributes) {
+            var value = attributes[key];
+            element.setAttribute(key, value);
+        }
+    }
+
+
     function applyAttributes(element, attributes) {
-        for (var i = 0; i < attributes.length; i++) {
-            var attr = attributes[i];
-            console.log('Is Attr: ', attr.type === 'Attr')
-            console.log('Is Event: ', attr.type === 'Event')
-            if (attr.type === 'Attr') {
-                element.setAttribute(attr.key, attr.value);
-            }
-            else if (attr.type === 'Event') {
-                var type = attr.event;
-                var handler = attr.handler; // Avoid capture of the last attr for handler
-                element.addEventListener(type, function (event) {
-                    Wicket.WebSocket.send(JSON.stringify({
-                        handlerId: handler,
-                        payload: null
-                    }));
-                });
-            }
-            else {
-                console.debug('Unkown Attribute: ', attr);
-            }
+        for (var key in attributes) {
+
+            var value = attributes[key];
+
+            key === 'EVENT'
+                ? applyEvents(element, value)
+                :
+            key === 'ATTRIBUTE'
+                ? applyAttr(element, value)
+                : console.log('Unknown attribute type', key);
         }
     }
 
     function render(node) {
-        if (node === undefined) {
-            return;
-        }
-
-        if (node.type === 'Node') {
-            var element = document.createElement(node.name)
-            applyAttributes(element, node.attributes);
-            node.children.map(function (next) {
-                element.appendChild(render(next))
-            });
-            return element
-        }
-        else if(node.type === 'Text') {
-            return document.createTextNode(node.content);
+        if (typeof node === 'string') {
+            return document.createTextNode(node);
         }
         else {
-            console.debug('Unkown Html node', node);
+            var name = node[0];
+            var attributes = node[1];
+            var element = document.createElement(name);
+            applyAttributes(element, attributes);
+            for (var i = 2; i < node.length; ++i) {
+                var child = node[i];
+                element.appendChild(render(child))
+            }
+
+            return element;
         }
     }
 
@@ -53,11 +77,11 @@ window.addEventListener('load', function () {
     });
 
     Wicket.Event.subscribe("/websocket/message", function (event, message) {
+        console.log('Message: ', message)
         var result = JSON.parse(message);
         var node = render(result);
         morphdom(app, node);
 
-        console.log('Message: ', message)
     });
 
     Wicket.Event.subscribe("/websocket/closed", function () {

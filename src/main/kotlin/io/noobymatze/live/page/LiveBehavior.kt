@@ -179,7 +179,7 @@ internal class LiveBehavior<Model: Serializable, Msg: Serializable>(
         data class Connected<Model, Msg>(
             val model: Model,
             val session: Session,
-            val handlers: Map<Int, Attribute.Handler.Fn<Msg>>
+            val handlers: Map<Int, Attribute.Value.Listener<Msg>>
         ): State<Model, Msg>()
 
     }
