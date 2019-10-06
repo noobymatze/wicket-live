@@ -13,10 +13,12 @@ abstract class LivePage<Model: Serializable, Msg: Serializable>(
     params: PageParameters
 ): WebPage(params), Program<Model, Msg>, IMarkupResourceStreamProvider {
 
+    private val model = init()
+
     override fun onInitialize() {
         super.onInitialize()
 
-        add(LiveBehavior(this))
+        add(LiveBehavior(this, model))
     }
 
     override fun getMarkupResourceStream(
@@ -30,7 +32,7 @@ abstract class LivePage<Model: Serializable, Msg: Serializable>(
         |    <title>Test</title>
         |  </head>
         |  <body>
-        |    <div id="app"></div>
+        |    <div id="app">${view(model).render()}</div>
         |  </body>
         |</html>
     """.trimMargin())

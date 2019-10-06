@@ -21,14 +21,17 @@ import java.io.Serializable
 
 
 internal class LiveBehavior<Model: Serializable, Msg: Serializable>(
-    private val program: Program<Model, Msg>
+    private val program: Program<Model, Msg>,
+    private val model: Model?
 ) : WebSocketBehavior() {
 
 
     /**
      * Track the current state.
      */
-    private var state: State<Model, Msg> = State.NeverConnected()
+    private var state: State<Model, Msg> = model
+        ?.let { State.Disconnected<Model, Msg>(it) }
+        ?: State.NeverConnected()
 
 
     override fun onConnect(message: ConnectedMessage) {

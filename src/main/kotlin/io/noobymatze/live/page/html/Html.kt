@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
+import io.noobymatze.live.page.html.Attribute.Type
 import io.noobymatze.live.page.html.Attribute.Type.Event
 import java.io.Serializable
 import java.util.*
@@ -20,7 +21,7 @@ sealed class Html<out Msg>: Serializable {
      */
     internal data class Node<out Msg>(
         val name: String,
-        val attributes: MutableMap<Attribute.Type, List<Attribute<@UnsafeVariance Msg>>>,
+        val attributes: MutableMap<Type, List<Attribute<@UnsafeVariance Msg>>>,
         val children: List<Html<Msg>>
     ) : Html<Msg>()
 
@@ -69,6 +70,16 @@ sealed class Html<out Msg>: Serializable {
 
     }
 
+    fun render(): String = when (this) {
+        is Node ->
+            """<$name${attributes[Type.Attribute]?.joinToString("") { 
+                " ${it.key}: ${(it.value as Attribute.Value.Str).value}" 
+            } ?: ""}>${children.joinToString("") { it.render() }}</$name>"""
+
+        is Text ->
+            content
+    }
+
 
     fun replaceHandlers(): Map<Int, Attribute.Value.Listener<Msg>> {
         val html = Stack<Html<Msg>>().apply { add(this@Html) }
@@ -97,8 +108,8 @@ sealed class Html<out Msg>: Serializable {
 
         private fun <Msg> organizeAttributes(
             attributes: List<Attribute<Msg>>
-        ): MutableMap<Attribute.Type, List<Attribute<Msg>>> {
-            val map = mutableMapOf<Attribute.Type, MutableList<Attribute<Msg>>>()
+        ): MutableMap<Type, List<Attribute<Msg>>> {
+            val map = mutableMapOf<Type, MutableList<Attribute<Msg>>>()
             attributes.forEach {
                 if (!map.containsKey(it.type)) {
                     map[it.type] = mutableListOf()
@@ -109,7 +120,7 @@ sealed class Html<out Msg>: Serializable {
 
             // This is casting up, so no problems here
             @Suppress("UNCHECKED_CAST")
-            return map as MutableMap<Attribute.Type, List<Attribute<Msg>>>
+            return map as MutableMap<Type, List<Attribute<Msg>>>
         }
 
         fun <Msg> node(name: String, attributes: List<Attribute<Msg>>, vararg children: Html<Msg>): Html<Msg> =
