@@ -2,6 +2,7 @@ package io.noobymatze.live.page
 
 import io.noobymatze.live.page.ExamplePage.Model
 import io.noobymatze.live.page.ExamplePage.Msg
+import io.noobymatze.live.page.ExamplePage.Msg.*
 import io.noobymatze.live.page.html.Attributes.attribute
 import io.noobymatze.live.page.html.Attributes.classList
 import io.noobymatze.live.page.html.Attributes.name
@@ -45,13 +46,13 @@ class ExamplePage(params: PageParameters): LivePage<Model, Msg>(params) {
         ),
             button(
                 listOf(
-                    onClick(Msg.Inc),
+                    onClick(Inc),
                     attribute("data-test", "Test")
                 ),
                 text("Increment"))
         ),
         div(button(
-            listOf(onClick(Msg.Dec)),
+            listOf(onClick(Dec)),
             text("Decrement")
         )),
         div(text("Hello ${model.name ?: " World"}!")),
@@ -61,7 +62,7 @@ class ExamplePage(params: PageParameters): LivePage<Model, Msg>(params) {
     private fun viewForm(name: String?): Html<Msg> =
         form(
             listOf(
-                Events.onSubmit { Msg.Submit(it["name"] as String) }
+                Events.onSubmit { SetName(it["name"] as String) }
             ),
             input(type("text"), name("name"), value(name ?: "")),
             input(type("number"), name("age")),
@@ -76,17 +77,17 @@ class ExamplePage(params: PageParameters): LivePage<Model, Msg>(params) {
     sealed class Msg : Serializable {
         object Inc : Msg()
         object Dec : Msg()
-        data class Submit(val name: String): Msg()
+        data class SetName(val name: String): Msg()
     }
 
     override fun update(msg: Msg, model: Model): Model = when (msg) {
-        is Msg.Inc ->
+        is Inc ->
             model.copy(count = model.count + 1)
 
-        is Msg.Dec ->
+        is Dec ->
             model.copy(count = model.count - 1)
 
-        is Msg.Submit ->
+        is SetName ->
             model.copy(name = msg.name)
 
     }
