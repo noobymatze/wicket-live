@@ -21,40 +21,22 @@ import java.io.Serializable
 
 class ExamplePage(params: PageParameters): LivePage<Model, Msg>(params) {
 
+
+    // MODEL
+
+
     data class Model(
         val count: Int,
         val name: String?
     ): Serializable
 
-    sealed class Msg : Serializable {
-        object Inc : Msg()
-        object Dec : Msg()
-        data class Submit(val name: String): Msg()
-    }
 
     override fun init(): Model = Model(0, null)
 
-    override fun update(msg: Msg, model: Model): Model = when (msg) {
-        is Msg.Inc ->
-            model.copy(count = model.count + 1)
 
-        is Msg.Dec ->
-            model.copy(count = model.count - 1)
 
-        is Msg.Submit ->
-            model.copy(name = msg.name)
+    // VIEW
 
-    }
-
-    // Alternative
-
-    // div(classList("bla" to (model < 5))) {
-    //   button(
-    //     onClick(Msg.Inc)
-    //   ) {
-    //      text("Increment")
-    //   }
-    // }
 
     override fun view(model: Model): Html<Msg> = div(
         div(text(model.count.toString())),
@@ -85,5 +67,28 @@ class ExamplePage(params: PageParameters): LivePage<Model, Msg>(params) {
             input(type("number"), name("age")),
             button(text("Save"))
         )
+
+
+
+    // UPDATE
+
+
+    sealed class Msg : Serializable {
+        object Inc : Msg()
+        object Dec : Msg()
+        data class Submit(val name: String): Msg()
+    }
+
+    override fun update(msg: Msg, model: Model): Model = when (msg) {
+        is Msg.Inc ->
+            model.copy(count = model.count + 1)
+
+        is Msg.Dec ->
+            model.copy(count = model.count - 1)
+
+        is Msg.Submit ->
+            model.copy(name = msg.name)
+
+    }
 
 }
