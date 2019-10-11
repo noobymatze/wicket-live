@@ -36,7 +36,7 @@ object Attributes {
         attribute("hidden", value)
 
     fun <Msg> type(value: String): Attribute<Msg> =
-        attribute("type_", value)
+        attribute("type", value)
 
     fun <Msg> value(value: String): Attribute<Msg> =
         attribute("value", value)

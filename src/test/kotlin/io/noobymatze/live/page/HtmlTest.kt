@@ -1,6 +1,8 @@
 package io.noobymatze.live.page
 
+import io.noobymatze.live.page.html.Html
 import org.junit.Test
+import kotlin.test.assertEquals
 
 
 /**
@@ -70,5 +72,13 @@ class HtmlTest {
             """.trimMargin()
         }.forEach(::println)
 
+    }
+
+    @Test
+    fun testHashcode() {
+        val a = Html.Node<Any?>("div", mutableMapOf(), listOf())
+        val b = Html.Node<Any?>("div", mutableMapOf(), listOf(a))
+        val c = Html.Node<Any?>("div", mutableMapOf(), listOf(a))
+        // assertEquals(a.hashCode(), b.hashCode())
     }
 }

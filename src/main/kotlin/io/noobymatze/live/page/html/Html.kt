@@ -45,17 +45,19 @@ sealed class Html<out Msg>: Serializable {
                 is Node -> gen.apply {
                     writeStartArray()
                     writeString(html.name)
-                    writeStartObject()
-                    html.attributes.forEach { type, list ->
-                        writeFieldName(type.name.toUpperCase())
+                    if (!html.attributes.isEmpty()) {
                         writeStartObject()
                         val serializer = provider.findValueSerializer(Attribute::class.java)
-                        list.forEach {
-                            serializer.serialize(it, gen, provider)
+                        html.attributes.forEach { (type, list) ->
+                            writeFieldName(type.identifier.toString())
+                            writeStartObject()
+                            list.forEach {
+                                serializer.serialize(it, gen, provider)
+                            }
+                            writeEndObject()
                         }
                         writeEndObject()
                     }
-                    writeEndObject()
                     html.children.forEach {
                         serialize(it, gen, provider)
                     }
@@ -73,7 +75,7 @@ sealed class Html<out Msg>: Serializable {
     fun render(): String = when (this) {
         is Node ->
             """<$name${attributes[Type.Attribute]?.joinToString("") { 
-                " ${it.key}: ${(it.value as Attribute.Value.Str).value}" 
+                " ${it.key}='${(it.value as Attribute.Value.Str).value}'" 
             } ?: ""}>${children.joinToString("") { it.render() }}</$name>"""
 
         is Text ->
@@ -330,11 +332,8 @@ sealed class Html<out Msg>: Serializable {
         fun <Msg> form(vararg children: Html<Msg>): Html<Msg> =
             node("form", listOf(), *children)
 
-        fun <Msg> input(attributes: List<Attribute<Msg>>, vararg children: Html<Msg>): Html<Msg> =
-            node("input", attributes, *children)
-
-        fun <Msg> input(vararg children: Html<Msg>): Html<Msg> =
-            node("input", listOf(), *children)
+        fun <Msg> input(vararg attributes: Attribute<Msg>): Html<Msg> =
+            node("input", attributes.toList())
 
         fun <Msg> textarea(attributes: List<Attribute<Msg>>, vararg children: Html<Msg>): Html<Msg> =
             node("textarea", attributes, *children)

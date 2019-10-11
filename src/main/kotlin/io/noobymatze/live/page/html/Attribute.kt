@@ -15,10 +15,10 @@ data class Attribute<out Msg>(
     val value: Value<Msg>
 ): Serializable {
 
-    enum class Type {
-        Event,
-        Attribute,
-        Property
+    enum class Type(val identifier: Int) {
+        Event(0),
+        Attribute(1),
+        Property(2)
     }
 
     sealed class Value<out Msg>: Serializable {
