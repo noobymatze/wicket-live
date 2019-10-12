@@ -1,5 +1,7 @@
 package io.noobymatze.live.page.html
 
+import kotlin.reflect.KProperty
+
 
 object Attributes {
 
@@ -88,6 +90,9 @@ object Attributes {
 
     fun <Msg> name(value: String): Attribute<Msg> =
         attribute("name", value)
+
+    fun <Msg> name(value: KProperty<*>): Attribute<Msg> =
+        attribute("name", value.name)
 
     fun <Msg> novalidate(value: String): Attribute<Msg> =
         attribute("novalidate", value)

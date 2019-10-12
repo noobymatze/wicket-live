@@ -16,9 +16,9 @@ data class BrowserEvent(
         property = "type"
     )
     @JsonSubTypes(
-        JsonSubTypes.Type(value = Payload.FormData::class, name = "form")
+        JsonSubTypes.Type(value = Payload.Form::class, name = "form")
     )
-    sealed class Payload(): Serializable {
-        data class FormData(val data: Map<String, Any?>): Payload()
+    sealed class Payload: Serializable {
+        data class Form(val data: Map<String, String?>): Payload()
     }
 }

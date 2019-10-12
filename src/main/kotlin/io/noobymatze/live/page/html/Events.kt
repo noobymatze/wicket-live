@@ -1,7 +1,6 @@
 package io.noobymatze.live.page.html
 
 import io.noobymatze.live.page.html.BrowserEvent.Payload
-import java.lang.RuntimeException
 
 
 object Events {
@@ -75,11 +74,11 @@ object Events {
     /**
      *
      */
-    fun <Msg> onSubmit(f: (Map<String, Any?>) -> Msg): Attribute<Msg> =
+    fun <Msg> onSubmit(f: (FormData) -> Msg): Attribute<Msg> =
         on("submit") { payload ->
             when (payload) {
-                is Payload.FormData ->
-                    f(payload.data)
+                is Payload.Form ->
+                    f(FormData(payload.data))
 
                 else ->
                     throw RuntimeException("Unexpected payload: $payload")

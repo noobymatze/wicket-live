@@ -67,6 +67,7 @@ window.addEventListener('load', function () {
     });
 
     Wicket.Event.subscribe("/websocket/error", function () {
+        // Disable everything
         console.log('Error')
     });
 });

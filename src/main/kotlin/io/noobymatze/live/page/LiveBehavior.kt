@@ -124,10 +124,15 @@ internal class LiveBehavior<Model: Serializable, Msg: Serializable>(
 
             else -> {
                 val newModel = program.update(handler(message.payload), state.model)
-                val html = program.view(newModel)
-                val handlers = html.replaceHandlers()
-                send(state.session, html)
-                state.copy(model = newModel, handlers = handlers)
+                if (newModel != state.model) {
+                    val html = program.view(newModel)
+                    val handlers = html.replaceHandlers()
+                    send(state.session, html)
+                    state.copy(model = newModel, handlers = handlers)
+                }
+                else {
+                    state
+                }
             }
         }
     }
