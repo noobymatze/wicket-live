@@ -1,8 +1,7 @@
 package io.noobymatze.live.page
 
-import io.noobymatze.live.page.html.Html
+import io.noobymatze.live.html.Html
 import org.junit.Test
-import kotlin.test.assertEquals
 
 
 /**

@@ -1,10 +1,10 @@
-package io.noobymatze.live.page.html
+package io.noobymatze.live.html
 
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
-import io.noobymatze.live.page.html.BrowserEvent.Payload
+import io.noobymatze.live.html.BrowserEvent.Payload
 import java.io.Serializable
 
 

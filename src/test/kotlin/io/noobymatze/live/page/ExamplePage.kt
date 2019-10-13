@@ -3,22 +3,22 @@ package io.noobymatze.live.page
 import io.noobymatze.live.page.ExamplePage.Model
 import io.noobymatze.live.page.ExamplePage.Msg
 import io.noobymatze.live.page.ExamplePage.Msg.*
-import io.noobymatze.live.page.html.Attributes
-import io.noobymatze.live.page.html.Attributes.attribute
-import io.noobymatze.live.page.html.Attributes.classList
-import io.noobymatze.live.page.html.Attributes.name
-import io.noobymatze.live.page.html.Attributes.type
-import io.noobymatze.live.page.html.Attributes.value
-import io.noobymatze.live.page.html.Events
-import io.noobymatze.live.page.html.Events.onClick
-import io.noobymatze.live.page.html.Events.onSubmit
-import io.noobymatze.live.page.html.FormData
-import io.noobymatze.live.page.html.Html
-import io.noobymatze.live.page.html.Html.Companion.button
-import io.noobymatze.live.page.html.Html.Companion.div
-import io.noobymatze.live.page.html.Html.Companion.form
-import io.noobymatze.live.page.html.Html.Companion.input
-import io.noobymatze.live.page.html.Html.Companion.text
+import io.noobymatze.live.html.Attributes
+import io.noobymatze.live.html.Attributes.attribute
+import io.noobymatze.live.html.Attributes.classList
+import io.noobymatze.live.html.Attributes.name
+import io.noobymatze.live.html.Attributes.type
+import io.noobymatze.live.html.Attributes.value
+import io.noobymatze.live.html.Events.onClick
+import io.noobymatze.live.html.Events.onSubmit
+import io.noobymatze.live.html.FormData
+import io.noobymatze.live.html.Html
+import io.noobymatze.live.html.Html.Companion.button
+import io.noobymatze.live.html.Html.Companion.div
+import io.noobymatze.live.html.Html.Companion.form
+import io.noobymatze.live.html.Html.Companion.input
+import io.noobymatze.live.html.Html.Companion.text
+import io.noobymatze.live.program.Cmd
 import org.apache.wicket.request.mapper.parameter.PageParameters
 import java.io.Serializable
 import kotlin.reflect.KProperty
@@ -43,10 +43,11 @@ class ExamplePage(params: PageParameters): LivePage<Model, Msg>(params) {
     ): Serializable
 
 
-    override fun init(): Model = Model(
-        count = 0,
-        person = Person("Matthias", 28)
-    )
+    override fun init(flags: PageParameters): Pair<Model, Cmd<Msg>> =
+        Model(
+            count = 0,
+            person = Person("Matthias", 28)
+        ) to Cmd.none
 
 
 
@@ -107,12 +108,12 @@ class ExamplePage(params: PageParameters): LivePage<Model, Msg>(params) {
         data class SetData(val data: FormData): Msg()
     }
 
-    override fun update(msg: Msg, model: Model): Model = when (msg) {
+    override fun update(msg: Msg, model: Model): Pair<Model, Cmd<Msg>> = when (msg) {
         is Inc ->
-            model.copy(count = model.count + 1)
+            model.copy(count = model.count + 1) to Cmd.none
 
         is Dec ->
-            model.copy(count = model.count - 1)
+            model.copy(count = model.count - 1) to Cmd.none
 
         is SetData -> {
             val name: String? = msg.data[Person::name]
@@ -141,7 +142,7 @@ class ExamplePage(params: PageParameters): LivePage<Model, Msg>(params) {
             model.copy(
                 person = newPerson,
                 errors = errors
-            )
+            ) to Cmd.none
         }
     }
 

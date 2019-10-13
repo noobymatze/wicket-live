@@ -57,7 +57,7 @@ window.addEventListener('load', function () {
     Wicket.Event.subscribe("/websocket/message", function (event, message) {
         console.log('Message: ', message)
         var result = JSON.parse(message);
-        var node = _LiveDom_render(result, sendToApp);
+        var node = _LiveDom_render(result.html, sendToApp);
         morphdom(app, node);
 
     });

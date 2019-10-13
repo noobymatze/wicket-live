@@ -1,4 +1,4 @@
-package io.noobymatze.live.page.html
+package io.noobymatze.live.html
 
 import kotlin.reflect.KProperty
 

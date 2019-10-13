@@ -1,6 +1,6 @@
-package io.noobymatze.live.page.html
+package io.noobymatze.live.html
 
-import io.noobymatze.live.page.html.BrowserEvent.Payload
+import io.noobymatze.live.html.BrowserEvent.Payload
 
 
 object Events {
